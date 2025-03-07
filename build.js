@@ -10,7 +10,7 @@ marked.setOptions({
 });
 
 // Create base directories
-fs.ensureDirSync('public/dist');
+fs.ensureDirSync('public');
 fs.ensureDirSync('public/blog');
 
 // Read base template
@@ -31,8 +31,15 @@ async function buildPages() {
                 .replace('{{title}}', attributes.title || 'My Site')
                 .replace('{{content}}', html);
             
-            const outputPath = `public/dist/${file.replace('.md', '.html')}`;
-            await fs.writeFile(outputPath, pageHtml);
+            // For index.md, place it at the root
+            if (file === 'index.md') {
+                await fs.writeFile('public/index.html', pageHtml);
+            } else {
+                // For other pages, create a directory for each page
+                const pageName = file.replace('.md', '');
+                fs.ensureDirSync(`public/${pageName}`);
+                await fs.writeFile(`public/${pageName}/index.html`, pageHtml);
+            }
         }
     }
 }
@@ -52,8 +59,9 @@ async function buildBlog() {
                 .replace('{{title}}', attributes.title || 'Blog Post')
                 .replace('{{content}}', html);
             
-            const outputPath = `public/blog/${file.replace('.md', '.html')}`;
-            await fs.writeFile(outputPath, pageHtml);
+            const postName = file.replace('.md', '');
+            fs.ensureDirSync(`public/blog/${postName}`);
+            await fs.writeFile(`public/blog/${postName}/index.html`, pageHtml);
         }
     }
 }
