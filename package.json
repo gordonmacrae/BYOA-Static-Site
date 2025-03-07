@@ -1,0 +1,21 @@
+{
+  "name": "static-site",
+  "version": "1.0.0",
+  "description": "Simple static site with blog",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js",
+    "serve": "npx serve public"
+  },
+  "dependencies": {
+    "front-matter": "^4.0.2",
+    "fs-extra": "^11.3.0",
+    "marked": "^9.1.6"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
