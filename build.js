@@ -19,10 +19,9 @@ const template = fs.readFileSync('src/templates/base.html', 'utf-8');
 function convertMarkdownToHtml(markdown, title) {
   const html = marked.parse(markdown);
   return template
-    .replace('{{title}}', title)
-    .replace('{{content}}', html)
-    .replace(/href="\//g, `href="${baseUrl}/`) // Update internal links
-    .replace(/src="\//g, `src="${baseUrl}/`);  // Update internal asset sources
+    .replace(/\{\{title\}\}/g, title)
+    .replace(/\{\{content\}\}/g, html)
+    .replace(/\{\{baseUrl\}\}/g, baseUrl);
 }
 
 // Function to process a markdown file
