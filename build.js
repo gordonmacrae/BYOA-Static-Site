@@ -1,85 +1,62 @@
 const fs = require('fs-extra');
 const path = require('path');
-const { marked } = require('marked');
-const frontMatter = require('front-matter');
+const marked = require('marked');
 
 // Configure marked for security
 marked.setOptions({
-    headerIds: true,
-    mangle: false
+  headerIds: false,
+  mangle: false
 });
 
-// Create base directories
-fs.ensureDirSync('public');
-fs.ensureDirSync('public/blog');
+// Read template
+const template = fs.readFileSync('src/templates/base.html', 'utf-8');
 
-// Read base template
-const baseTemplate = fs.readFileSync('src/templates/base.html', 'utf-8');
+// Function to convert markdown to HTML
+function convertMarkdownToHtml(markdown, title) {
+  const html = marked.parse(markdown);
+  return template
+    .replace('{{title}}', title)
+    .replace('{{content}}', html);
+}
 
-// Build pages from markdown
-async function buildPages() {
-    const pagesDir = 'src/content/pages';
-    const files = await fs.readdir(pagesDir);
+// Function to process a markdown file
+function processMarkdownFile(filePath) {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const title = content.split('\n')[0].replace('# ', '');
+  const html = convertMarkdownToHtml(content, title);
+  
+  // Create output path
+  const relativePath = path.relative('src/content', filePath);
+  const outputPath = path.join('dist', relativePath.replace('.md', '.html'));
+  
+  // Ensure output directory exists
+  fs.ensureDirSync(path.dirname(outputPath));
+  
+  // Write HTML file
+  fs.writeFileSync(outputPath, html);
+  console.log(`Built: ${outputPath}`);
+}
+
+// Copy static files
+fs.copySync('src/static', 'dist/static');
+
+// Process all markdown files
+function processDirectory(dir) {
+  const files = fs.readdirSync(dir);
+  
+  files.forEach(file => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
     
-    for (const file of files) {
-        if (file.endsWith('.md')) {
-            const content = await fs.readFile(path.join(pagesDir, file), 'utf-8');
-            const { attributes, body } = frontMatter(content);
-            const html = marked(body);
-            
-            const pageHtml = baseTemplate
-                .replace('{{title}}', attributes.title || 'My Site')
-                .replace('{{content}}', html);
-            
-            // For index.md, place it at the root
-            if (file === 'index.md') {
-                await fs.writeFile('public/index.html', pageHtml);
-            } else {
-                // For other pages, create a directory for each page
-                const pageName = file.replace('.md', '');
-                fs.ensureDirSync(`public/${pageName}`);
-                await fs.writeFile(`public/${pageName}/index.html`, pageHtml);
-            }
-        }
+    if (stat.isDirectory()) {
+      processDirectory(filePath);
+    } else if (file.endsWith('.md')) {
+      processMarkdownFile(filePath);
     }
+  });
 }
 
-// Build blog posts
-async function buildBlog() {
-    const blogDir = 'src/content/blog';
-    const files = await fs.readdir(blogDir);
-    
-    for (const file of files) {
-        if (file.endsWith('.md')) {
-            const content = await fs.readFile(path.join(blogDir, file), 'utf-8');
-            const { attributes, body } = frontMatter(content);
-            const html = marked(body);
-            
-            const pageHtml = baseTemplate
-                .replace('{{title}}', attributes.title || 'Blog Post')
-                .replace('{{content}}', html);
-            
-            const postName = file.replace('.md', '');
-            fs.ensureDirSync(`public/blog/${postName}`);
-            await fs.writeFile(`public/blog/${postName}/index.html`, pageHtml);
-        }
-    }
-}
+// Start processing from content directory
+processDirectory('src/content');
 
-// Copy static assets
-async function copyStatic() {
-    await fs.copy('src/styles', 'public/styles');
-    await fs.copy('src/scripts', 'public/scripts');
-    await fs.copy('src/assets', 'public/assets');
-}
-
-// Run build
-async function build() {
-    await Promise.all([
-        buildPages(),
-        buildBlog(),
-        copyStatic()
-    ]);
-}
-
-build().catch(console.error); 
+console.log('Build completed successfully!'); 

@@ -1,9 +1,3 @@
----
-title: Welcome to My Site
----
+# Welcome to My Website
 
-# Welcome!
-
-This is my personal website where I share my thoughts and ideas.
-
-[Check out my blog](/blog) 
+This is the landing page of my website.
