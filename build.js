@@ -24,22 +24,42 @@ function convertMarkdownToHtml(markdown, title) {
     .replace(/\{\{baseUrl\}\}/g, baseUrl);
 }
 
-// Function to process a markdown file
+// Clean dist directory
+fs.removeSync('dist');
+fs.ensureDirSync('dist');
+
+// Copy static files and .nojekyll
+fs.copySync('src/static', 'dist/static');
+fs.writeFileSync('dist/.nojekyll', '');
+
+// Process index.md first
+const indexContent = fs.readFileSync('src/content/pages/index.md', 'utf-8');
+const indexTitle = indexContent.split('\n')[0].replace('# ', '');
+const indexHtml = convertMarkdownToHtml(indexContent, indexTitle);
+fs.writeFileSync('dist/index.html', indexHtml);
+console.log('Built: dist/index.html');
+
+// Process 404.md
+const notFoundContent = fs.readFileSync('src/content/pages/404.md', 'utf-8');
+const notFoundTitle = notFoundContent.split('\n')[0].replace('# ', '');
+const notFoundHtml = convertMarkdownToHtml(notFoundContent, notFoundTitle);
+fs.writeFileSync('dist/404.html', notFoundHtml);
+console.log('Built: dist/404.html');
+
+// Function to process other markdown files
 function processMarkdownFile(filePath) {
+  // Skip index.md and 404.md as they're handled separately
+  if (filePath.endsWith('index.md') || filePath.endsWith('404.md')) {
+    return;
+  }
+
   const content = fs.readFileSync(filePath, 'utf-8');
   const title = content.split('\n')[0].replace('# ', '');
   const html = convertMarkdownToHtml(content, title);
   
   // Create output path
   const relativePath = path.relative('src/content', filePath);
-  let outputPath;
-  
-  // Special handling for index.md
-  if (relativePath === 'pages/index.md') {
-    outputPath = path.join('dist', 'index.html');
-  } else {
-    outputPath = path.join('dist', relativePath.replace('.md', '.html'));
-  }
+  const outputPath = path.join('dist', relativePath.replace('.md', '.html'));
   
   // Ensure output directory exists
   fs.ensureDirSync(path.dirname(outputPath));
@@ -48,13 +68,6 @@ function processMarkdownFile(filePath) {
   fs.writeFileSync(outputPath, html);
   console.log(`Built: ${outputPath}`);
 }
-
-// Clean dist directory
-fs.removeSync('dist');
-fs.ensureDirSync('dist');
-
-// Copy static files
-fs.copySync('src/static', 'dist/static');
 
 // Process all markdown files
 function processDirectory(dir) {
@@ -72,12 +85,7 @@ function processDirectory(dir) {
   });
 }
 
-// Start processing from content directory
+// Process remaining content
 processDirectory('src/content');
-
-// Copy 404.md output to 404.html in root
-if (fs.existsSync('dist/pages/404.html')) {
-  fs.copyFileSync('dist/pages/404.html', 'dist/404.html');
-}
 
 console.log('Build completed successfully!'); 
