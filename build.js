@@ -2,6 +2,10 @@ const fs = require('fs-extra');
 const path = require('path');
 const marked = require('marked');
 
+// Get the base URL from package.json or environment
+const pkg = require('./package.json');
+const baseUrl = process.env.NODE_ENV === 'production' ? '/BYOA-Static-Site' : '';
+
 // Configure marked for security
 marked.setOptions({
   headerIds: false,
@@ -16,7 +20,9 @@ function convertMarkdownToHtml(markdown, title) {
   const html = marked.parse(markdown);
   return template
     .replace('{{title}}', title)
-    .replace('{{content}}', html);
+    .replace('{{content}}', html)
+    .replace(/href="\//g, `href="${baseUrl}/`) // Update internal links
+    .replace(/src="\//g, `src="${baseUrl}/`);  // Update internal asset sources
 }
 
 // Function to process a markdown file
@@ -36,6 +42,10 @@ function processMarkdownFile(filePath) {
   fs.writeFileSync(outputPath, html);
   console.log(`Built: ${outputPath}`);
 }
+
+// Clean dist directory
+fs.removeSync('dist');
+fs.ensureDirSync('dist');
 
 // Copy static files
 fs.copySync('src/static', 'dist/static');
