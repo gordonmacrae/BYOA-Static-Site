@@ -1,3 +1,7 @@
 # Welcome to My Website
 
-This is the landing page of my website.
+This is my personal website where I share my thoughts and ideas.
+
+## Recent Posts
+
+Check out my [blog]({{baseUrl}}/blog) for the latest updates!

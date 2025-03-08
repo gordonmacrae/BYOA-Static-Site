@@ -32,7 +32,14 @@ function processMarkdownFile(filePath) {
   
   // Create output path
   const relativePath = path.relative('src/content', filePath);
-  const outputPath = path.join('dist', relativePath.replace('.md', '.html'));
+  let outputPath;
+  
+  // Special handling for index.md
+  if (relativePath === 'pages/index.md') {
+    outputPath = path.join('dist', 'index.html');
+  } else {
+    outputPath = path.join('dist', relativePath.replace('.md', '.html'));
+  }
   
   // Ensure output directory exists
   fs.ensureDirSync(path.dirname(outputPath));
@@ -67,5 +74,10 @@ function processDirectory(dir) {
 
 // Start processing from content directory
 processDirectory('src/content');
+
+// Copy 404.md output to 404.html in root
+if (fs.existsSync('dist/pages/404.html')) {
+  fs.copyFileSync('dist/pages/404.html', 'dist/404.html');
+}
 
 console.log('Build completed successfully!'); 
